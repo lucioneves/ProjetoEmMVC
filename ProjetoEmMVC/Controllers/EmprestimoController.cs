@@ -1,6 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using ClosedXML.Excel;
+using Microsoft.AspNetCore.Mvc;
 using ProjetoEmMVC.Data;
 using ProjetoEmMVC.Models;
+using System.Data;
 
 namespace ProjetoEmMVC.Controllers
 {
@@ -8,7 +10,7 @@ namespace ProjetoEmMVC.Controllers
     {
         readonly private CApplicationDbContext _db;
 
-        public EmprestimoController(CApplicationDbContext db) 
+        public EmprestimoController(CApplicationDbContext db)
         {
             _db = db;
         }
@@ -31,17 +33,59 @@ namespace ProjetoEmMVC.Controllers
         {
             if (id == null || id == 0)
             {
-                return NotFound();          
+                return NotFound();
             }
 
             EmprestimosModel emprestimo = _db.Emprestimos.FirstOrDefault(x => x.Id == id);
 
             if (emprestimo == null)
-            { 
+            {
                 NotFound();
             }
 
-            return View(emprestimo);  
+            return View(emprestimo);
+        }
+
+        public IActionResult Exportar()
+        {
+            var dados = GetDados();
+
+            using (XLWorkbook workBook = new XLWorkbook())
+            {
+                workBook.AddWorksheet(dados,"Dados Emprestimos");
+
+                using (MemoryStream ms = new MemoryStream())
+                {
+                    workBook.SaveAs(ms);
+                    return File(ms.ToArray(), "application/vnd.openxmlformats-officedocument.spredsheetml.sheet", "Emprestimo.xls");
+                }
+            }
+
+        }
+
+        private DataTable GetDados()
+        {
+            DataTable dataTable = new DataTable();
+
+            dataTable.TableName = "Dados emprestimos";
+
+            dataTable.Columns.Add("Recebedor", typeof(string));
+            dataTable.Columns.Add("Fornecedor", typeof(string));
+            dataTable.Columns.Add("Livro", typeof(string));
+            dataTable.Columns.Add("Data ultima  atualizaçao", typeof(DateTime));
+
+            var dados = _db.Emprestimos.ToList();
+
+            if(dados.Count > 0)
+            {
+                dados.ForEach(emprestimo =>
+                {
+                    dataTable.Rows.Add(emprestimo.Recebedor, emprestimo.Fornecedor, emprestimo.LivrosEmprestado, emprestimo.DataUltimaAtualizacao);
+                });
+            }
+
+            return dataTable;
+
         }
 
         [HttpPost]
@@ -49,6 +93,8 @@ namespace ProjetoEmMVC.Controllers
         {
             if (ModelState.IsValid)
             {
+                emprestimos.DataUltimaAtualizacao = DateTime.Now;
+
                 _db.Emprestimos.Add(emprestimos);
                 _db.SaveChanges();
 
@@ -99,7 +145,13 @@ namespace ProjetoEmMVC.Controllers
         {
             if (ModelState.IsValid)
             {
-               _db.Emprestimos.Update(emprestimo);
+                var emprestimoDB = _db.Emprestimos.Find(emprestimo.Id);
+                
+                emprestimoDB.Recebedor = emprestimo.Recebedor;
+                emprestimoDB.Fornecedor = emprestimo.Fornecedor;
+                emprestimoDB.LivrosEmprestado = emprestimo.LivrosEmprestado;
+
+               _db.Emprestimos.Update(emprestimoDB);
                _db.SaveChanges();
 
                 TempData["MensagemSucesso"] = "Edição realizada com sucesso!";
