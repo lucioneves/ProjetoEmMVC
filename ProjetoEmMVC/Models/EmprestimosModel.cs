@@ -15,6 +15,6 @@ namespace ProjetoEmMVC.Models
         public string LivrosEmprestado { get; set; }
 
 
-        public DateTime DataUltimaAtualizacao { get; set; } = DateTime.Now;
+        public DateTime DataUltimaAtualizacao { get; set; }
     }
 }
