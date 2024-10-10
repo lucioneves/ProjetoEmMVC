@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using ProjetoEmMVC.Data;
 using ProjetoEmMVC.Models;
+using ProjetoEmMVC.Services.SessaoService;
 using System.Data;
 
 namespace ProjetoEmMVC.Controllers
@@ -9,15 +10,24 @@ namespace ProjetoEmMVC.Controllers
     public class EmprestimoController : Controller
     {
         readonly private CApplicationDbContext _db;
+        readonly private ISessaoInterface _sessaoInterface;
 
-        public EmprestimoController(CApplicationDbContext db)
+        public EmprestimoController(CApplicationDbContext db, ISessaoInterface sessaoInterface)
         {
             _db = db;
+            _sessaoInterface = sessaoInterface;
         }
 
 
         public IActionResult Index()
         {
+            var usuario = _sessaoInterface.BuscarSessao();
+            if(usuario == null)
+            {
+                return RedirectToAction("Login", "Login");
+            }
+
+
             IEnumerable<EmprestimosModel> emprestimos = _db.Emprestimos;
 
             return View(emprestimos);
@@ -25,12 +35,25 @@ namespace ProjetoEmMVC.Controllers
         [HttpGet]
         public IActionResult Cadastrar()
         {
+            var usuario = _sessaoInterface.BuscarSessao();
+            if (usuario == null)
+            {
+                return RedirectToAction("Login", "Login");
+            }
+
             return View();
         }
 
         [HttpGet]
         public IActionResult Editar(int? id)
         {
+            var usuario = _sessaoInterface.BuscarSessao();
+            if (usuario == null)
+            {
+                return RedirectToAction("Login", "Login");
+            }
+
+
             if (id == null || id == 0)
             {
                 return NotFound();
@@ -109,6 +132,13 @@ namespace ProjetoEmMVC.Controllers
         [HttpGet]
         public IActionResult Excluir(int? id) 
         {
+            var usuario = _sessaoInterface.BuscarSessao();
+            if (usuario == null)
+            {
+                return RedirectToAction("Login", "Login");
+            }
+
+
             if (id == null || id == 0)
             {
                 return NotFound();
