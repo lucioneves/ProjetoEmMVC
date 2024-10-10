@@ -1,5 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using ProjetoEmMVC.Data;
+using ProjetoEmMVC.Services.LoginServices;
+using ProjetoEmMVC.Services.SenhaService;
+using ProjetoEmMVC.Services.SessaoService;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,6 +12,19 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddDbContext<CApplicationDbContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
+});
+
+
+builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+builder.Services.AddScoped<ILoginInterface, LoginService>();
+builder.Services.AddScoped<ISenhaInterface, SenhaService>();
+builder.Services.AddScoped<ISessaoInterface, SessaoService>();
+
+builder.Services.AddSession(options =>
+{  
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+
 });
 
 var app = builder.Build();
@@ -28,8 +44,10 @@ app.UseRouting();
 
 app.UseAuthorization();
 
+app.UseSession();
+
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
+    pattern: "{controller=Login}/{action=Login}/{id?}");
 
 app.Run();
