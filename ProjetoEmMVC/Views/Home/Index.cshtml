@@ -2,6 +2,25 @@
     ViewData["Title"] = "Home Page";
 }
 
+
+@if (TempData["MensagemSucesso"] != null)
+{
+    <div class="alert alert-success text-bg-info" role="alert">
+        @TempData["MensagemSucesso"]
+
+    </div>
+}
+
+@if (TempData["MensagemErro"] != null)
+{
+    <div class="alert alert-danger text-bg-info" role="alert">
+        @TempData["MensagemErro"]
+
+    </div>
+}
+
+
+
 <div class="text-center">
     
     <h1 class="display-4">Empréstimos Online</h1>
