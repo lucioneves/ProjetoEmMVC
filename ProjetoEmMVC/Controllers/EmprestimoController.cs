@@ -2,24 +2,27 @@
 using Microsoft.AspNetCore.Mvc;
 using ProjetoEmMVC.Data;
 using ProjetoEmMVC.Models;
+using ProjetoEmMVC.Services.EmprestimosService;
 using ProjetoEmMVC.Services.SessaoService;
 using System.Data;
 
+//Validação de derionamento pra view.
 namespace ProjetoEmMVC.Controllers
 {
     public class EmprestimoController : Controller
     {
-        readonly private CApplicationDbContext _db;
+        
         readonly private ISessaoInterface _sessaoInterface;
+        private readonly IEmprestimosInterface _emprestimosInterface;
 
-        public EmprestimoController(CApplicationDbContext db, ISessaoInterface sessaoInterface)
-        {
-            _db = db;
+        public EmprestimoController(IEmprestimosInterface emprestimosInterface, ISessaoInterface sessaoInterface)
+        {            
             _sessaoInterface = sessaoInterface;
+            _emprestimosInterface = emprestimosInterface;
         }
 
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
             var usuario = _sessaoInterface.BuscarSessao();
             if(usuario == null)
@@ -27,11 +30,12 @@ namespace ProjetoEmMVC.Controllers
                 return RedirectToAction("Login", "Login");
             }
 
+            var emprestimos = await _emprestimosInterface.BuscarEmprestimos();
 
-            IEnumerable<EmprestimosModel> emprestimos = _db.Emprestimos;
-
-            return View(emprestimos);
+            return View(emprestimos.Dados);
         }
+
+
         [HttpGet]
         public IActionResult Cadastrar()
         {
@@ -45,33 +49,22 @@ namespace ProjetoEmMVC.Controllers
         }
 
         [HttpGet]
-        public IActionResult Editar(int? id)
+        public async Task<IActionResult> Editar(int? id)
         {
             var usuario = _sessaoInterface.BuscarSessao();
             if (usuario == null)
             {
                 return RedirectToAction("Login", "Login");
             }
+            
+            var emprestimo = await _emprestimosInterface.BuscarEmprestimosPorId(id);
 
-
-            if (id == null || id == 0)
-            {
-                return NotFound();
-            }
-
-            EmprestimosModel emprestimo = _db.Emprestimos.FirstOrDefault(x => x.Id == id);
-
-            if (emprestimo == null)
-            {
-                NotFound();
-            }
-
-            return View(emprestimo);
+            return View(emprestimo.Dados);
         }
 
-        public IActionResult Exportar()
+        public async Task<IActionResult> Exportar()
         {
-            var dados = GetDados();
+            var dados = await _emprestimosInterface.BuscarEmprestimoExcel();
 
             using (XLWorkbook workBook = new XLWorkbook())
             {
@@ -86,105 +79,81 @@ namespace ProjetoEmMVC.Controllers
 
         }
 
-        private DataTable GetDados()
-        {
-            DataTable dataTable = new DataTable();
-
-            dataTable.TableName = "Dados emprestimos";
-
-            dataTable.Columns.Add("Recebedor", typeof(string));
-            dataTable.Columns.Add("Fornecedor", typeof(string));
-            dataTable.Columns.Add("Livro", typeof(string));
-            dataTable.Columns.Add("Data ultima  atualizaçao", typeof(DateTime));
-
-            var dados = _db.Emprestimos.ToList();
-
-            if(dados.Count > 0)
-            {
-                dados.ForEach(emprestimo =>
-                {
-                    dataTable.Rows.Add(emprestimo.Recebedor, emprestimo.Fornecedor, emprestimo.LivrosEmprestado, emprestimo.DataUltimaAtualizacao);
-                });
-            }
-
-            return dataTable;
-
-        }
-
         [HttpPost]
-        public IActionResult Cadastrar(EmprestimosModel emprestimos)
+        public async Task<IActionResult> Cadastrar(EmprestimosModel emprestimos)
         {
             if (ModelState.IsValid)
-            {
-                emprestimos.DataUltimaAtualizacao = DateTime.Now;
-
-                _db.Emprestimos.Add(emprestimos);
-                _db.SaveChanges();
-
-                TempData["MensagemSucesso"] = "Cadastro realizado com sucesso!";
+            {        
+                var emprestimoResult = await _emprestimosInterface.CadastrarEmprestimo(emprestimos);
+                
+                if (emprestimoResult.Status)
+                {
+                    TempData["MensagemSucesso"] = emprestimoResult.Mensagem;
+                }
+                else
+                {
+                    TempData["MensagemErro"] = emprestimoResult.Mensagem;
+                    return View(emprestimoResult);
+                }                
 
                 return RedirectToAction("Index");
             }
             return View();
-
         }
 
         [HttpGet]
-        public IActionResult Excluir(int? id) 
+        public async Task<IActionResult> Excluir(int? id) 
         {
             var usuario = _sessaoInterface.BuscarSessao();
             if (usuario == null)
             {
                 return RedirectToAction("Login", "Login");
-            }
+            }            
 
+            var emprestimo = await _emprestimosInterface.BuscarEmprestimosPorId(id);
+            
+            return View(emprestimo.Dados);
 
-            if (id == null || id == 0)
-            {
-                return NotFound();
-            }
-
-            EmprestimosModel emprestimo = _db.Emprestimos.FirstOrDefault(x => x.Id == id);
-
-            if(emprestimo == null) 
-            {
-                return NotFound();
-            }
-            return View(emprestimo);
         }
 
         [HttpPost]
-        public IActionResult Excluir(EmprestimosModel emprestimo)
+        public async Task<IActionResult> Excluir(EmprestimosModel emprestimo)
         {
             if (emprestimo == null)
             {
-                return NotFound();
+                TempData["MensagemErro"] = "Emprestimo não localizado";
+                return RedirectToAction("Index");
             }
 
-            _db.Emprestimos.Remove(emprestimo);
-            _db.SaveChanges();
+            var emprestimoResult = await _emprestimosInterface.RemoveEmprestimo(emprestimo);
 
-            TempData["MensagemSucesso"] = "Exclusão realizada com sucesso!";
+            if (emprestimoResult.Status)
+            {
+                TempData["MensagemSucesso"] = emprestimoResult.Mensagem;
+            }
+            else
+            {
+                TempData["MensagemErro"] = emprestimoResult.Mensagem;
+            }            
 
             return RedirectToAction("Index");
 
         }
 
         [HttpPost]
-        public IActionResult Editar(EmprestimosModel emprestimo) 
+        public async Task<IActionResult> Editar(EmprestimosModel emprestimo) 
         {
             if (ModelState.IsValid)
             {
-                var emprestimoDB = _db.Emprestimos.Find(emprestimo.Id);
-                
-                emprestimoDB.Recebedor = emprestimo.Recebedor;
-                emprestimoDB.Fornecedor = emprestimo.Fornecedor;
-                emprestimoDB.LivrosEmprestado = emprestimo.LivrosEmprestado;
-
-               _db.Emprestimos.Update(emprestimoDB);
-               _db.SaveChanges();
-
-                TempData["MensagemSucesso"] = "Edição realizada com sucesso!";
+               var emprestimoResult  = await _emprestimosInterface.EditarEmprestimo(emprestimo);
+                if (emprestimoResult.Status)
+                {
+                    TempData["MensagemSucesso"] = emprestimoResult.Mensagem;
+                }
+                else
+                {
+                    TempData["MensagemErro"] = emprestimoResult.Mensagem;
+                }                
 
                 return RedirectToAction("Index");
             }
