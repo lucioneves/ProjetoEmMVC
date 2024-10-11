@@ -1,5 +1,24 @@
 ﻿@model IEnumerable<EmprestimosModel>
 
+
+@if (TempData["MensagemSucesso"] != null)
+{
+    <div class="alert alert-success text-bg-info" role="alert">
+        @TempData["MensagemSucesso"]
+
+    </div>
+}
+
+@if (TempData["MensagemErro"] != null)
+{
+    <div class="alert alert-danger text-bg-info" role="alert">
+        @TempData["MensagemErro"]
+
+    </div>
+}
+
+
+
 <div class="container">
     <div class="d-flex justify-content-between align-items-center mb-5">
         <h1>Emprestimos</h1>
@@ -12,21 +31,6 @@
         
     </div>
 
-    @if(TempData["MensagemSucesso"] != null)
-    {
-        <div class="alert alert-success text-bg-info" role="alert">
-            @TempData["MensagemSucesso"]
-
-        </div>
-    }
-
-    @if (TempData["MensagemErro"] != null)
-    {
-        <div class="alert alert-danger text-bg-info" role="alert">
-            @TempData["MensagemErro"]
-
-        </div>
-    }
 
 <table id="Emprestimos" class="table table-light table-hover mt-3 mb-4">
     <thead>

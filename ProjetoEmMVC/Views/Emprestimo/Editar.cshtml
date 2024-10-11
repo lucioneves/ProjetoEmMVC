@@ -2,6 +2,21 @@
 @{
     ViewData["title"] = "Editar Emprestimo";
 }
+@if (TempData["MensagemSucesso"] != null)
+{
+    <div class="alert alert-success text-bg-info" role="alert">
+        @TempData["MensagemSucesso"]
+
+    </div>
+}
+
+@if (TempData["MensagemErro"] != null)
+{
+    <div class="alert alert-danger text-bg-info" role="alert">
+        @TempData["MensagemErro"]
+
+    </div>
+}
 
 
 <div class="container bg-dark  p-3 rounded-5">
@@ -15,20 +30,20 @@
 
         <div class="mb-2">
             <label for="Recebedor" class="form-label text-light">Recebedor:</label>
-            <input type="text" class="form-control text-light" asp-for="Recebedor" id="Recebedor" placeholder="Quem está recebendo o livro?">
+            <input type="text" class="form-control text-dark" asp-for="Recebedor" id="Recebedor" placeholder="Quem está recebendo o livro?">
             <span class="text-danger" asp-validation-for="Recebedor"></span>
 
         </div>
 
         <div class="mb-2">
             <label for="Fornecedor" class="form-label text-light">Fornecedor:</label>
-            <input type="text" class="form-control text-light" asp-for="Fornecedor" id="Fornecedor" placeholder="Quem está emprestando o livro?">
+            <input type="text" class="form-control text-dark" asp-for="Fornecedor" id="Fornecedor" placeholder="Quem está emprestando o livro?">
             <span class="text-danger" asp-validation-for="Fornecedor"></span>
         </div>
 
         <div class="mb-3">
             <label for="Livro" class="form-label text-light">Livro:</label>
-            <input type="text" class="form-control text-light" id="Livro" asp-for="LivrosEmprestado" placeholder="Qual livro está sendo emprestado?">
+            <input type="text" class="form-control text-dark" id="Livro" asp-for="LivrosEmprestado" placeholder="Qual livro está sendo emprestado?">
             <span class="text-danger" asp-validation-for="LivrosEmprestado"></span>
         </div>
 
