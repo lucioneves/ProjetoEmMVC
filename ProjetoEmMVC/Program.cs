@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using ProjetoEmMVC.Data;
+using ProjetoEmMVC.Services.EmprestimosService;
 using ProjetoEmMVC.Services.LoginServices;
 using ProjetoEmMVC.Services.SenhaService;
 using ProjetoEmMVC.Services.SessaoService;
@@ -19,6 +20,7 @@ builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 builder.Services.AddScoped<ILoginInterface, LoginService>();
 builder.Services.AddScoped<ISenhaInterface, SenhaService>();
 builder.Services.AddScoped<ISessaoInterface, SessaoService>();
+builder.Services.AddScoped<IEmprestimosInterface, EmprestimosService>();
 
 builder.Services.AddSession(options =>
 {  
